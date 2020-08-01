@@ -1,0 +1,81 @@
+---
+title: "Volleyball"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+library(tidyverse)
+library(spData)
+library(sf)
+library(ggthemes)
+
+tuesdata <- tidytuesdayR::tt_load('2020-02-18')
+world <- world
+
+food_consumption <- tuesdata$food_consumption %>% 
+  mutate(country = ifelse(country == "USA", "United States", country))
+```
+
+```{r}
+most_consumed_foods <- food_consumption %>% 
+  group_by(country) %>% 
+  mutate(rank = min_rank(consumption)) %>% 
+  arrange(desc(consumption)) %>% 
+  filter(rank == 11) %>% 
+  select(-rank)
+
+highest_carbon_footprint <- food_consumption %>% 
+  group_by(country) %>% 
+  mutate(rank = min_rank(co2_emmission)) %>% 
+  arrange(desc(co2_emmission)) %>% 
+  filter(rank == 11) %>% 
+  select(-rank)
+
+countries <- food_consumption %>% 
+  group_by(country) %>% 
+  summarise(across(co2_emmission:consumption, sum))
+
+foods <- food_consumption %>% 
+  group_by(food_category) %>% 
+  summarise(across(co2_emmission:consumption, sum))
+```
+
+```{r}
+countries %>% 
+  left_join(world, by = c("country" = "name_long")) %>% 
+  ggplot() +
+    geom_sf(data = world, aes(geometry = geom), fill = "#fff7bc") +
+    geom_sf(aes(geometry = geom, fill = co2_emmission)) +
+    scale_fill_gradient(low = "lightgreen", high = "red") +
+    theme_map() +
+    theme(panel.background = element_rect(fill = "lightblue"),
+          legend.position = "right",
+          legend.background = element_blank()) +
+  labs(fill = "CO2 emissions")
+
+
+countries %>% 
+  left_join(world, by = c("country" = "name_long")) %>% 
+  ggplot() +
+    geom_sf(data = world, aes(geometry = geom), fill = "#fff7bc") +
+    geom_sf(aes(geometry = geom, fill = consumption)) +
+    scale_fill_gradient(low = "lightgreen", high = "red") +
+    theme_map() +
+    theme(panel.background = element_rect(fill = "lightblue"),
+          legend.position = "right",
+          legend.background = element_blank()) +
+  labs(fill = "Food Consumption")
+```
+
+
+
+
+
+
+
